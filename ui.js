@@ -222,9 +222,16 @@ function saveBasic() {
   state.meta.totalKm = km;
   state.meta.cities = cities;
 
-  // 同步 days 数组长度
+  // 同步 days 数组长度（增/减）
   while (state.days.length < days) {
     state.days.push({ title: '', description: '', hotel: '', food: '', imageData: null, highlights: '' });
+  }
+  while (state.days.length > days) {
+    state.days.pop();
+  }
+  // 修正 activeDay 越界
+  if (state.activeDay >= state.days.length) {
+    state.activeDay = state.days.length - 1;
   }
 
   showToast('💾 基本信息已保存');
@@ -297,25 +304,33 @@ function bindItineraryEvents() {
     });
   });
 
-  document.getElementById('saveDayBtn').addEventListener('click', function() {
-    var d = state.days[state.activeDay];
-    d.title = document.getElementById('day-title').value;
-    d.description = document.getElementById('day-desc').value;
-    d.hotel = document.getElementById('day-hotel').value;
-    d.food = document.getElementById('day-food').value;
-    d.highlights = document.getElementById('day-highlights').value;
-    renderPreviewPanel();
-    showToast('✅ D' + (state.activeDay + 1) + ' 行程已保存');
-  });
+  var saveDayBtn = document.getElementById('saveDayBtn');
+  if (saveDayBtn) {
+    saveDayBtn.addEventListener('click', function() {
+      var d = state.days[state.activeDay];
+      d.title = document.getElementById('day-title').value;
+      d.description = document.getElementById('day-desc').value;
+      d.hotel = document.getElementById('day-hotel').value;
+      d.food = document.getElementById('day-food').value;
+      d.highlights = document.getElementById('day-highlights').value;
+      renderPreviewPanel();
+      showToast('✅ D' + (state.activeDay + 1) + ' 行程已保存');
+    });
+  }
 
-  document.getElementById('deleteDayBtn').addEventListener('click', function() {
-    if (state.days.length <= 1) { showToast('⚠️ 至少保留一天行程'); return; }
-    state.days.splice(state.activeDay, 1);
-    state.activeDay = Math.max(0, state.activeDay - 1);
-    renderAll();
-  });
+  var deleteDayBtn = document.getElementById('deleteDayBtn');
+  if (deleteDayBtn) {
+    deleteDayBtn.addEventListener('click', function() {
+      if (state.days.length <= 1) { showToast('⚠️ 至少保留一天行程'); return; }
+      state.days.splice(state.activeDay, 1);
+      state.activeDay = Math.max(0, state.activeDay - 1);
+      renderAll();
+    });
+  }
 
-  document.getElementById('day-image').addEventListener('change', function(e) {
+  var dayImageInput = document.getElementById('day-image');
+  if (dayImageInput) {
+    dayImageInput.addEventListener('change', function(e) {
     var file = e.target.files[0];
     if (!file) return;
     compressImage(file).then(function(compressed) {
@@ -325,6 +340,7 @@ function bindItineraryEvents() {
       showToast('❌ 图片压缩失败，请重试');
     });
   });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -576,7 +592,9 @@ function bindContactEvents() {
     showToast('💾 联系信息已保存');
   });
 
-  document.getElementById('contact-qrcode').addEventListener('change', function(e) {
+  var qrInput = document.getElementById('contact-qrcode');
+  if (qrInput) {
+    qrInput.addEventListener('change', function(e) {
     var file = e.target.files[0];
     if (!file) return;
     compressImage(file).then(function(compressed) {
@@ -586,6 +604,7 @@ function bindContactEvents() {
       showToast('❌ 二维码图片上传失败');
     });
   });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -784,7 +803,9 @@ async function runAIParse() {
 
     Object.assign(state.meta, parsed, { totalDays: parsed.totalDays || 7 });
     state.days = (parsed.days || []).map(function(d) { return Object.assign({}, d, { imageData: null }); });
-    state.food = (parsed.food || []).map(function(f) { return Object.assign({}, f, { imageData: null }); });
+    state.food = (parsed.food || []).map(function(f) {
+      return { name: f.name || f.Name || '', desc: f.desc || '', imageData: null };
+    });
     state.tips = (parsed.tips || []).map(function(t) { return { icon: t.icon || '☀️', text: t.text || '' }; });
     if (parsed.cost) Object.assign(state.cost, parsed.cost);
 
@@ -810,7 +831,8 @@ async function runAIParse() {
 // ---------------------------------------------------------------------------
 function escHtml(str) {
   if (str == null) return '';
-  return String(str)
+  if (typeof str !== 'string') str = String(str);
+  return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
