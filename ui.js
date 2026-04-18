@@ -3,12 +3,7 @@
 // ---------------------------------------------------------------------------
 // 初始化
 // ---------------------------------------------------------------------------
-document.addEventListener('DOMContentLoaded', async function() {
-  await loadPptxLib(function(msg) {
-    var el = document.getElementById('load-status');
-    if (el) el.textContent = msg;
-  });
-
+document.addEventListener('DOMContentLoaded', function() {
   // 隐藏加载遮罩
   var overlay = document.getElementById('loading-overlay');
   if (overlay) {

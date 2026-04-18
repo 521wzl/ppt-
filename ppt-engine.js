@@ -1,37 +1,5 @@
-// ppt-engine.js — PptxGenJS加载器 + 所有buildSlide函数 + handleGenerate
-
-let PptxGenJS = null; // 全局类引用
-
-// ---------------------------------------------------------------------------
-// PptxGenJS 加载器（CDN下载 → localStorage缓存）
-// ---------------------------------------------------------------------------
-async function loadPptxLib(onProgress) {
-  const cached = localStorage.getItem(PPTX_STORAGE_KEY);
-  if (cached) {
-    onProgress('从本地缓存加载...');
-    try {
-      eval(cached);
-      PptxGenJS = window.PptxGenJS;
-      return;
-    } catch (e) {
-      onProgress('缓存损坏，重新下载...');
-      localStorage.removeItem(PPTX_STORAGE_KEY);
-    }
-  }
-  onProgress('首次下载 PPT 库（仅此一次）...');
-  try {
-    const resp = await fetch('https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.cjs.js');
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const code = await resp.text();
-    localStorage.setItem(PPTX_STORAGE_KEY, code);
-    onProgress('库已缓存，后续无需联网');
-    eval(code);
-    PptxGenJS = window.PptxGenJS;
-  } catch (e) {
-    onProgress('加载失败，请检查网络后刷新重试');
-    throw e;
-  }
-}
+// ppt-engine.js — 所有buildSlide函数 + handleGenerate
+// PptxGenJS 通过 <script> 标签全局加载，无需加载器
 
 // ---------------------------------------------------------------------------
 // 图片压缩（Canvas API，≤2MB，MAX_W=1920px）
