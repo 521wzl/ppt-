@@ -164,6 +164,13 @@ function bindGlobalEvents() {
     if (action === 'generate') handleGenerate();
   });
 
+  // 主题切换器（事件委托）
+  document.getElementById('themeSwitcher').addEventListener('click', function(e) {
+    var btn = e.target.closest('.theme-btn');
+    if (!btn) return;
+    applyTheme(btn.dataset.theme);
+  });
+
   // 设置按钮
   document.getElementById('openSettings').addEventListener('click', openSettings);
 }
